@@ -8,81 +8,77 @@ import normalComputation
 
 sys.setrecursionlimit(100000)
 def NSquareNMapping((i,j)):
+	"""a bijetive application from NSquare to N
+		the reverse application is useless for this application
+		the common 
+		"""
 	return int((i+j)*(i+j+1)/2+(j+1))
 
 
-class FaceVerboseInfo(object):
-	"""docstring for FaceVerboseInfo"""
-	def __init__(self, facesAsEdgeIndexToVector,normalFaceNO, insideElementOfFace):
-		self.facesAsEdgeIndexToVector = facesAsEdgeIndexToVector
-		self.normalFaceNO = normalFaceNO
-		self.insideElementOfFace = insideElementOfFace 	
+class FaceInfo(object):
+	"""docstring for FaceInfo"""
+	def __init__(self, normalFaceNO, insideElementOfFace,edgeIndex):
+		self.normal = normalFaceNO
+		self.insideElement = insideElementOfFace
+		self.edgeIndex = edgeIndex
 
-class FacesVerboseInfo(object):
+class FacesInfo(object):
 	"""docstring for FacesProcessed"""
 	def __init__(self, faces, vertices):
 		self.faces = faces
 		self.vertices = vertices
 
-		self.constructEdgeIndexAndVertex()
 
 		self.computeNormals()
 		self.computeInsideElement()
+		self.constructEdgeIndexAndVertex()
 
 		self.constructListOfFaces()
 
 
 	def computeNormals(self):
-		self.normalFacesNO = [ self.computeNormal(edges.values()) for edges  in self.facesAsEdgeIndexToVector]
+		vfaces = vertices[self.faces]
+		# facesAsEdgeVector = [ [el[2] - el[1] ,el[2] - el[0] ] for el in vfaces]
+		vface0 = vfaces[:,0,:]
+		vface1 = vfaces[:,1,:]
+		vface2 = vfaces[:,2,:]
+
+		v21 = vface2 - vface1
+		v20 = vface2 - vface0
+		self.normalFaces = normalComputation.computeNormalMultiple([v20,v21])
 
 	def computeInsideElement(self):
 		vfaces = self.vertices[self.faces]
 		self.insideElementOfFaces = np.matmul((0.25,0.25,0.5),vfaces)
 
-
-	# @staticmethod
-	def computeNormal(self,edges):
-		return normalComputation.computeNormal(edges)
-
 	def constructEdgeIndexAndVertex(self):
 		facesedges = [[ [el[0],el[1]] , [el[1],el[2]] , [el[0],el[2]] ] for el in self.faces]
 		facesedges = [[[min(el1),max(el1)] for el1 in el] for el in facesedges]
-		facesAsEdgeIndexes = np.array([[NSquareNMapping(el1) for el1 in el] for el in facesedges])
-
-		vfaces = vertices[self.faces]
-		facesAsEdgeVector = [ [el[1] - el[0] , el[2] - el[1] ,el[2] - el[0] ] for el in vfaces]
-
-		self.facesAsEdgeIndexToVector = [dict(zip(facesAsEdgeIndexes[i],facesAsEdgeVector[i])) for i in range(len(facesAsEdgeIndexes)) ]
+		self.facesAsEdgeIndexes = np.array([[NSquareNMapping(el1) for el1 in el] for el in facesedges])
 	def constructListOfFaces(self):
-		self.listOfFaces = [FaceVerboseInfo(self.facesAsEdgeIndexToVector[i],self.normalFacesNO[i],self.insideElementOfFaces[i]) for i in range(len(self.facesAsEdgeIndexToVector))]
+
+		tmp = np.hstack((self.normalFaces,self.insideElementOfFaces,self.facesAsEdgeIndexes.astype(self.normalFaces.dtype)))
+		self.listOfFaces = [FaceInfo(el[0:3],el[3:6],el[6:9]) for el in tmp]
 
 
 class FaceAsNode(object):
 	"""docstring for Node"""
-	def __init__(self,faceVerboseInfo,nbResEdgeMax=3):
-		self.edges = faceVerboseInfo.facesAsEdgeIndexToVector
-		self.normal = faceVerboseInfo.normalFaceNO
-		self.insideElement = faceVerboseInfo.insideElementOfFace
+	def __init__(self,faceInfo,nbResEdgeMax=3):
+		self.faceInfo = faceInfo 
 		self.nbResEdgeMax = nbResEdgeMax
-		self.faces = dict.fromkeys(self.edges.keys())
+		self.faces = dict.fromkeys(self.faceInfo.edgeIndex)
 
 	def addFace(self,AFaceAsNode,edgeIndex):
-		if (edgeIndex is not(None)):
-			self.faces[edgeIndex] = AFaceAsNode
-			self.nbResEdgeMax -= 1
-			return True
-		return False
-
-	def checkIntersection(self,AFaceAsNode):
-		for el1 in self.edges.keys():
-			for el2 in AFaceAsNode.edges.keys():
-				if (el1==el2):
-					return el1
+		self.faces[edgeIndex] = AFaceAsNode
+		self.nbResEdgeMax -= 1
 
 	def checkIntersectionAndAddFace(self,AFaceAsNode):
-		edgeIndex = self.checkIntersection(AFaceAsNode)
-		faceAdded = self.addFace(AFaceAsNode,edgeIndex)
-		return faceAdded
+		for el1 in self.faces.keys():
+			for el2 in AFaceAsNode.faces.keys():
+				if (el1==el2):
+					self.addFace(AFaceAsNode,el1)
+					return True
+		return False
 
 
 class TernaryTreeEdgeConstruct(object):
@@ -93,30 +89,15 @@ class TernaryTreeEdgeConstruct(object):
 		del self.listOfFacesAsNode[0]
 
 		print(len(self.listOfFacesAsNode))
-		# pdb.runcall(self.TernaryConstruct,self.FANInit)
 		self.TernaryConstruct(self.FANInit)
 
 	def TernaryConstruct(self,FAN):
-		# indexesToRemove = []
-		# index=0
-		# listOfFacesAsNodeCopy = self.listOfFacesAsNode.copy()
 		for el in list(self.listOfFacesAsNode):
 			faceAdded = FAN.checkIntersectionAndAddFace(el)
 			if(faceAdded):
 				self.listOfFacesAsNode.remove(el)
-				#TODO : change for loop with iterator on list
-			# index+=1
-		# for el in indexesToRemove:
-			# del self.listOfFacesAsNode[el]
-
-		# print("\n")
-		# print(len(indexesToRemove))
 		print(len(self.listOfFacesAsNode))
-		# print(FAN.edges)
-		# print("\n")
-
 		for key in FAN.faces.keys():
-			# face = FAN.faces[key]
 			if (FAN.faces[key] is not(None)):
 				self.TernaryConstruct(FAN.faces[key])
 
@@ -130,7 +111,7 @@ if __name__ == '__main__':
 	# filename = 'globalsave.pkl'
 	faces = np.load("bunny_faces.npy")
 	vertices = np.load("bunny_vertices.npy")
-	algoFacesConstruct = FacesVerboseInfo(faces,vertices)
+	algoFacesConstruct = FacesInfo(faces,vertices)
 	listOfFaces = algoFacesConstruct.listOfFaces
 	start= time.time()
 	algo = TernaryTreeEdgeConstruct(listOfFaces)
