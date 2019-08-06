@@ -4,6 +4,7 @@ import sys
 import time
 import cPickle as pickle
 import dill
+import normalComputation
 
 sys.setrecursionlimit(100000)
 def NSquareNMapping((i,j)):
@@ -30,16 +31,6 @@ class FacesVerboseInfo(object):
 
 		self.constructListOfFaces()
 
-	# def computeEdgeIndexAndVector(self):
-	# 	vfaces = self.vertices[self.faces]
-	# 	for i in range(len(self.faces)):
-	# 		face = self.faces[i]
-	# 		vface = vfaces[i]
-	# 		indexEdge = NSquareNMapping(face[0],face[1])
-	# 		vectorEdge = vface[1] - vface[0]
-
-	# 		indexEdge = NSquareNMapping(face[1],face[2])
-	# 		vectorEdge = vface[1] - vface[0]
 
 	def computeNormals(self):
 		self.normalFacesNO = [ self.computeNormal(edges.values()) for edges  in self.facesAsEdgeIndexToVector]
@@ -51,26 +42,7 @@ class FacesVerboseInfo(object):
 
 	# @staticmethod
 	def computeNormal(self,edges):
-		e1 = edges[0]
-		e2 = edges[1]
-
-		a = e2[0]
-		b = e2[1]
-		c = e2[2]
-
-
-		d = e1[0]
-		e = e1[1]
-		f = e1[2]
-
-		det = -b*d + e*a
-
-		x = b*f - c*e
-		y = c*d - a*f
-		normal = (x/det,y/det,1)
-		norm = np.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
-		normal = [el/norm for el in normal]
-		return normal
+		return normalComputation.computeNormal(edges)
 
 	def constructEdgeIndexAndVertex(self):
 		facesedges = [[ [el[0],el[1]] , [el[1],el[2]] , [el[0],el[2]] ] for el in self.faces]
@@ -155,7 +127,7 @@ if __name__ == '__main__':
 	
 	# filename='/tmp/shelve.out'
 	# my_shelf = shelve.open(filename,'n') # 'n' for new
-	filename = 'globalsave.pkl'
+	# filename = 'globalsave.pkl'
 	faces = np.load("bunny_faces.npy")
 	vertices = np.load("bunny_vertices.npy")
 	algoFacesConstruct = FacesVerboseInfo(faces,vertices)
