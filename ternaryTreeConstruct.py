@@ -12,9 +12,10 @@ def NSquareNMapping((i,j)):
 
 class FaceVerboseInfo(object):
 	"""docstring for FaceVerboseInfo"""
-	def __init__(self, facesAsEdgeIndexToVector,normalFaceNO):
+	def __init__(self, facesAsEdgeIndexToVector,normalFaceNO, insideElementOfFace):
 		self.facesAsEdgeIndexToVector = facesAsEdgeIndexToVector
-		self.normalFaceNO = normalFaceNO		
+		self.normalFaceNO = normalFaceNO
+		self.insideElementOfFace = insideElementOfFace 	
 
 class FacesVerboseInfo(object):
 	"""docstring for FacesProcessed"""
@@ -25,22 +26,28 @@ class FacesVerboseInfo(object):
 		self.constructEdgeIndexAndVertex()
 
 		self.computeNormals()
+		self.computeInsideElement()
 
 		self.constructListOfFaces()
 
-	def computeEdgeIndexAndVector(self):
-		vfaces = self.vertices[self.faces]
-		for i in range(len(self.faces)):
-			face = self.faces[i]
-			vface = vfaces[i]
-			indexEdge = NSquareNMapping(face[0],face[1])
-			vectorEdge = vface[1] - vface[0]
+	# def computeEdgeIndexAndVector(self):
+	# 	vfaces = self.vertices[self.faces]
+	# 	for i in range(len(self.faces)):
+	# 		face = self.faces[i]
+	# 		vface = vfaces[i]
+	# 		indexEdge = NSquareNMapping(face[0],face[1])
+	# 		vectorEdge = vface[1] - vface[0]
 
-			indexEdge = NSquareNMapping(face[1],face[2])
-			vectorEdge = vface[1] - vface[0]
+	# 		indexEdge = NSquareNMapping(face[1],face[2])
+	# 		vectorEdge = vface[1] - vface[0]
 
 	def computeNormals(self):
 		self.normalFacesNO = [ self.computeNormal(edges.values()) for edges  in self.facesAsEdgeIndexToVector]
+
+	def computeInsideElement(self):
+		vfaces = self.vertices[self.faces]
+		self.insideElementOfFaces = np.matmul((0.25,0.25,0.5),vfaces)
+
 
 	# @staticmethod
 	def computeNormal(self,edges):
@@ -60,7 +67,10 @@ class FacesVerboseInfo(object):
 
 		x = b*f - c*e
 		y = c*d - a*f
-		return (x/det,y/det,1)
+		normal = (x/det,y/det,1)
+		norm = np.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2)
+		normal = [el/norm for el in normal]
+		return normal
 
 	def constructEdgeIndexAndVertex(self):
 		facesedges = [[ [el[0],el[1]] , [el[1],el[2]] , [el[0],el[2]] ] for el in self.faces]
@@ -72,7 +82,7 @@ class FacesVerboseInfo(object):
 
 		self.facesAsEdgeIndexToVector = [dict(zip(facesAsEdgeIndexes[i],facesAsEdgeVector[i])) for i in range(len(facesAsEdgeIndexes)) ]
 	def constructListOfFaces(self):
-		self.listOfFaces = [FaceVerboseInfo(self.facesAsEdgeIndexToVector[i],self.normalFacesNO[i]) for i in range(len(self.facesAsEdgeIndexToVector))]
+		self.listOfFaces = [FaceVerboseInfo(self.facesAsEdgeIndexToVector[i],self.normalFacesNO[i],self.insideElementOfFaces[i]) for i in range(len(self.facesAsEdgeIndexToVector))]
 
 
 class FaceAsNode(object):
@@ -80,6 +90,7 @@ class FaceAsNode(object):
 	def __init__(self,faceVerboseInfo,nbResEdgeMax=3):
 		self.edges = faceVerboseInfo.facesAsEdgeIndexToVector
 		self.normal = faceVerboseInfo.normalFaceNO
+		self.insideElement = faceVerboseInfo.insideElementOfFace
 		self.nbResEdgeMax = nbResEdgeMax
 		self.faces = dict.fromkeys(self.edges.keys())
 
@@ -110,8 +121,8 @@ class TernaryTreeEdgeConstruct(object):
 		del self.listOfFacesAsNode[0]
 
 		print(len(self.listOfFacesAsNode))
-		pdb.runcall(self.TernaryConstruct,self.FANInit)
-		# self.TernaryConstruct(self.FANInit)
+		# pdb.runcall(self.TernaryConstruct,self.FANInit)
+		self.TernaryConstruct(self.FANInit)
 
 	def TernaryConstruct(self,FAN):
 		# indexesToRemove = []
@@ -149,8 +160,9 @@ if __name__ == '__main__':
 	vertices = np.load("bunny_vertices.npy")
 	algoFacesConstruct = FacesVerboseInfo(faces,vertices)
 	listOfFaces = algoFacesConstruct.listOfFaces
-
+	start= time.time()
 	algo = TernaryTreeEdgeConstruct(listOfFaces)
+	stop = time.time()
 	# start=time.time()
 	# algo = TernaryTreeEdgeConstruct(faces)
 	# stop = time.time()
