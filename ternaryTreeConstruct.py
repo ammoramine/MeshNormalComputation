@@ -43,9 +43,7 @@ class FacesInfo(object):
 		vface1 = vfaces[:,1,:]
 		vface2 = vfaces[:,2,:]
 
-		v21 = vface2 - vface1
-		v20 = vface2 - vface0
-		self.normalFaces = normalComputation.computeNormalMultiple([v20,v21])
+		self.normalFaces = normalComputation.computeNormalMultiple([vface0,vface1,vface2])
 
 	def computeInsideElement(self):
 		vfaces = self.vertices[self.faces]

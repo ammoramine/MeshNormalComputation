@@ -1,9 +1,10 @@
 import numpy as np
 
 
-def computeNormal(vectors):
-	e1 = vectors[0]
-	e2 = vectors[1]
+
+def computeNormal(simplexe):
+	e1 = simplexe[0]-simplexe[2]
+	e2 = simplexe[1]-simplexe[2]
 
 	a = e2[0]
 	b = e2[1]
@@ -23,9 +24,9 @@ def computeNormal(vectors):
 	normal = [el/norm for el in normal]
 	return normal
 
-def computeNormalMultiple(arrayOfVectors):
-	e1 = arrayOfVectors[0]
-	e2 = arrayOfVectors[1]
+def computeNormalMultiple(arrayOfSimplexes):
+	e1 = arrayOfSimplexes[0] - arrayOfSimplexes[2]
+	e2 = arrayOfSimplexes[1] - arrayOfSimplexes[2]
 
 	a = e2[:,0]
 	b = e2[:,1]
