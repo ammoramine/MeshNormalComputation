@@ -17,10 +17,11 @@ def NSquareNMapping((i,j)):
 
 class FaceInfo(object):
 	"""docstring for FaceInfo"""
-	def __init__(self, normalFaceNO, insideElementOfFace,edgeIndex):
+	def __init__(self, normalFaceNO, insideElementOfFace,edgeIndex,indexFace):
 		self.normal = normalFaceNO
 		self.insideElement = insideElementOfFace
 		self.edgeIndex = edgeIndex
+		self.indexFace = indexFace
 
 class FacesInfo(object):
 	"""docstring for FacesProcessed"""
@@ -32,6 +33,7 @@ class FacesInfo(object):
 		self.computeNormals()
 		self.computeInsideElement()
 		self.constructEdgeIndexAndVertex()
+		self.constructFaceIndexes()
 
 		self.constructListOfFaces()
 
@@ -50,13 +52,17 @@ class FacesInfo(object):
 		self.insideElementOfFaces = np.matmul((0.25,0.25,0.5),vfaces)
 
 	def constructEdgeIndexAndVertex(self):
-		facesedges = [[ [el[0],el[1]] , [el[1],el[2]] , [el[0],el[2]] ] for el in self.faces]
-		facesedges = [[[min(el1),max(el1)] for el1 in el] for el in facesedges]
-		self.facesAsEdgeIndexes = np.array([[NSquareNMapping(el1) for el1 in el] for el in facesedges])
+		self.facesedges = [[ [el[0],el[1]] , [el[1],el[2]] , [el[0],el[2]] ] for el in self.faces]
+		self.facesedges = [[[min(el1),max(el1)] for el1 in el] for el in self.facesedges]
+		self.facesAsEdgeIndexes = np.array([[NSquareNMapping(el1) for el1 in el] for el in self.facesedges])
+
+	def constructFaceIndexes(self):
+		"""the index of the face is its index on the original list"""
+		self.indexFaces = np.arange(self.faces.shape[0]).reshape(-1,1)
 	def constructListOfFaces(self):
 
-		tmp = np.hstack((self.normalFaces,self.insideElementOfFaces,self.facesAsEdgeIndexes.astype(self.normalFaces.dtype)))
-		self.listOfFaces = [FaceInfo(el[0:3],el[3:6],el[6:9]) for el in tmp]
+		tmp = np.hstack((self.normalFaces,self.insideElementOfFaces,self.facesAsEdgeIndexes.astype(self.normalFaces.dtype),self.indexFaces.astype(self.normalFaces.dtype)))
+		self.listOfFaces = [FaceInfo(el[0:3],el[3:6],el[6:9],el[9]) for el in tmp]
 
 
 class FaceAsNode(object):
@@ -65,15 +71,23 @@ class FaceAsNode(object):
 		self.faceInfo = faceInfo 
 		self.nbResEdgeMax = nbResEdgeMax
 		self.faces = dict.fromkeys(self.faceInfo.edgeIndex)
-
+		self.keys = set(self.faces.keys())
 	def addFace(self,AFaceAsNode,edgeIndex):
 		self.faces[edgeIndex] = AFaceAsNode
-		self.nbResEdgeMax -= 1
+		# AFaceAsNode.nbResEdgeMax-=1
+		# self.nbResEdgeMax -= 1
 
 	def checkIntersectionAndAddFace(self,AFaceAsNode):
-		for el1 in self.faces.keys():
-			for el2 in AFaceAsNode.faces.keys():
-				if (el1==el2):
-					self.addFace(AFaceAsNode,el1)
-					return True
-		return False
+		listCommonElement = list(self.keys & AFaceAsNode.keys)
+		if (len(listCommonElement)==0):
+			return False
+		else:
+			self.addFace(AFaceAsNode,listCommonElement[0])
+			return True
+		# self.addFace(commonElement)
+		# for el1 in self.keys:
+			# for el2 in AFaceAsNode.keys:
+				# if (el1==el2):
+					# self.addFace(AFaceAsNode,el1)
+					# return True
+		# return False
