@@ -46,6 +46,7 @@ class GlobalConstraint(object):
 			return insidePt, -np.array(normalNonOriented)
 
 	def getInsidePointOfSimplexe(self,verticesSimplexe):
+		"""to get a point inside the simplexe, it is sufficient to have all the coefficient non nul with sum 1"""
 		insidePt = np.matmul((0.25,0.25,0.5),verticesSimplexe)
 		return insidePt
 
@@ -77,7 +78,7 @@ class GlobalConstraint(object):
 
 		outwardOrientation = -1*np.product(np.array([ localConstraint.checkOrientationConnectedSimplexe(simplexes[i],simplexes[i+1]) for i in range(2)]))
 
-		return faceNotInConvexHull,simplexes[-1][0],simplexes[-1][1]*outwardOrientation
+		return faceNotInConvexHull,simplexes[-1][1]*outwardOrientation
 
 
 	# def compute(self):
@@ -99,7 +100,14 @@ if __name__ == '__main__':
 	vertices = np.load("bunny_vertices.npy")
 
 	algoGlobalConstraint = GlobalConstraint(faces,vertices)
+
+	face, normalOriented = algoGlobalConstraint.getFaceOnOriginalHullOutwardlyOriented()
 	
+	s= face[0]
+
+	z = [[s[0],s[1]],[s[1],s[2]], [s[0],s[2]] ]
+
+	faceWithEdgeIndex =[ NSquareNMapping(el) for el in z]
 
 	#check if there is a common face
 
