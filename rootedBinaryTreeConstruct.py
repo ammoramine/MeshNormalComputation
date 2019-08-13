@@ -109,9 +109,9 @@ class BucketConstructor(object):
 if __name__ == '__main__':
 	
 
-	facesWithRedondancy = np.load("bunny_faces.npy")
+	facesWithRedondancy = np.load("faces.npy")
 	faces = np.unique(np.sort(facesWithRedondancy,axis=1),axis=0) # remove redundant faces
-	vertices = np.load("bunny_vertices.npy")
+	vertices = np.load("vertices.npy")
 	algoFacesConstruct = FacesInfo(faces,vertices)
 
 

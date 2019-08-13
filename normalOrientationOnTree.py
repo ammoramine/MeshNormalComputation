@@ -1,5 +1,4 @@
 import numpy as np 
-from ternaryTreeConstructBis import *
 import localConstraint
 
 from mpl_toolkits.mplot3d import axes3d

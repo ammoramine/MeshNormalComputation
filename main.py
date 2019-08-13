@@ -14,9 +14,9 @@ if __name__ == '__main__':
 
 	start= time.time()
 
-	facesWithRedundancy = np.load("bunny_faces.npy")
+	facesWithRedundancy = np.load("faces.npy")
 	faces,indexOfFacesWithRedundancyToIndexOfFaces = np.unique(np.sort(facesWithRedundancy,axis=1),axis=0,return_inverse=True) # remove redundant faces
-	vertices = np.load("bunny_vertices.npy")
+	vertices = np.load("vertices.npy")
 	algoFacesConstruct = faceStructure.FacesInfo(faces,vertices)
 
 
@@ -25,9 +25,9 @@ if __name__ == '__main__':
 
 	listOfFacesAsNode = algoBucket.listOfFacesAsNode
 
-	# facesWithRedondancy = np.load("bunny_faces.npy")
+	# facesWithRedondancy = np.load("faces.npy")
 	# faces = np.unique(np.sort(facesWithRedondancy,axis=1),axis=0) # remove redundant faces
-	# vertices = np.load("bunny_vertices.npy")
+	# vertices = np.load("vertices.npy")
 	# algoFacesConstruct = FacesInfo(faces,vertices)
 	# listOfFaces = algoFacesConstruct.listOfFaces
 	# listOfFacesAsNode = [FaceAsNode(el) for el in listOfFaces]
