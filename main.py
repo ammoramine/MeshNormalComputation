@@ -7,16 +7,18 @@ import normalOrientationOnTree
 import cPickle as pickle
 import time
 import pdb
-# def mainAlgo():
-	# pass
-
+import sys
+# enter the 
 if __name__ == '__main__':
 
 	start= time.time()
 
-	facesWithRedundancy = np.load("faces.npy")
+	verticesFile = sys.argv[1]
+	facesFile = sys.argv[2]
+
+	facesWithRedundancy = np.load(facesFile)
 	faces,indexOfFacesWithRedundancyToIndexOfFaces = np.unique(np.sort(facesWithRedundancy,axis=1),axis=0,return_inverse=True) # remove redundant faces
-	vertices = np.load("vertices.npy")
+	vertices = np.load(verticesFile)
 	algoFacesConstruct = faceStructure.FacesInfo(faces,vertices)
 
 
