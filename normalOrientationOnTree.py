@@ -25,12 +25,13 @@ class OrientationComputer(object):
 		for key in  FAN.faces.keys():
 			if (FAN.faces[key] is not(None)):
 				# nij = FAN.edges[key]
-				nj = FAN.faces[key].faceInfo.normal
-				cj = FAN.faceInfo.insideElement
+				for face in  FAN.faces[key]:
+					nj = face.faceInfo.normal
+					cj = FAN.faceInfo.insideElement
 
-				sign = localConstraint.checkOrientationConnectedSimplexe([ni,ci],[nj,cj])
-				FAN.faces[key].faceInfo.orientation = sign * FAN.faceInfo.orientation
-				self.computeOrientationChild(FAN.faces[key])
+					sign = localConstraint.checkOrientationConnectedSimplexe([ni,ci],[nj,cj])
+					face.faceInfo.orientation = sign * FAN.faceInfo.orientation
+					self.computeOrientationChild(face)
 
 class TreeToListResultConverter(object):
 	"""docstring for showOrientation"""
@@ -49,7 +50,8 @@ class TreeToListResultConverter(object):
 		self.listIndexFaces.append(FAN.faceInfo.indexFace)
 		for key in FAN.faces:
 			if (FAN.faces[key] is not(None)):
-				self.getOrientedNormalsOfFace(FAN.faces[key])
+				for face in FAN.faces[key]:
+					self.getOrientedNormalsOfFace(face)
 
 	def orderTheLists(self):
 		"""order the list or normals starting from the face of index 0 to the face of last index"""
@@ -57,8 +59,8 @@ class TreeToListResultConverter(object):
 		self.listNormals = self.listNormals[orderedIndexOfFaces]
 		self.listInsidePt = self.listInsidePt[orderedIndexOfFaces]
 
-	def saveNormalOfFaces(self,faceNormalsFile = "face_normals.npy"):
-		np.save(faceNormalsFile,self.listNormals)
+	# def saveNormalOfFaces(self,faceNormalsFile = "face_normals.npy"):
+		# np.save(faceNormalsFile,self.listNormals)
 
 # 	def showOrientation(self,N1,N2,lengthNormal=0.07):
 # 		fig = plt.figure()
