@@ -5,6 +5,7 @@ import time
 import cPickle as pickle
 import dill
 import normalComputation
+from operator import itemgetter
 
 
 def NSquareNMapping((i,j)):
@@ -15,13 +16,24 @@ def NSquareNMapping((i,j)):
 	return int((i+j)*(i+j+1)/2+(j+1))
 
 
+class VerticeNode(object):
+	"""docstring for VerticeNode"""
+	def __init__(self, indexVertice):
+		self.indexVertice = indexVertice
+		self.normalsFaces = []
+	# def addFace(self,FAN):
+		# self.faces.append(FAN)
+
+		
+
 class FaceInfo(object):
 	"""docstring for FaceInfo"""
-	def __init__(self, normalFaceNO, insideElementOfFace,edgeIndex,indexFace):
+	def __init__(self, normalFaceNO, insideElementOfFace,edgeIndex,indexFace,vertices):
 		self.normal = normalFaceNO
 		self.insideElement = insideElementOfFace
 		self.edgeIndex = edgeIndex
 		self.indexFace = indexFace
+		self.vertices = vertices
 
 class FacesInfo(object):
 	"""docstring for FacesProcessed"""
@@ -34,8 +46,11 @@ class FacesInfo(object):
 		self.computeInsideElement()
 		self.constructEdgeIndexAndVertex()
 		self.constructFaceIndexes()
+		self.constructListOfVertices()
 
 		self.constructListOfFaces()
+
+		# pdb.runcall(self.constructListOfFaces)
 
 
 	def computeNormals(self):
@@ -62,8 +77,39 @@ class FacesInfo(object):
 	def constructListOfFaces(self):
 
 		tmp = np.hstack((self.normalFaces,self.insideElementOfFaces,self.facesAsEdgeIndexes.astype(self.normalFaces.dtype),self.indexFaces.astype(self.normalFaces.dtype)))
-		self.listOfFaces = [FaceInfo(el[0:3],el[3:6],el[6:9],el[9]) for el in tmp]
+		#add list of vertices not as index but as  VerticeNode
 
+		z = self.listVerticesConnectedToFace
+
+		size = len(self.listVerticesConnectedToFace)
+
+		tmp1 = zip(z[:size/3],z[size/3:2*size/3],z[2*size/3:])
+
+		tmp2 = zip(tmp,tmp1)
+
+		# self.listOfFaces = [FaceInfo(el[0:3],el[3:6],el[6:9],el[9]) for el in tmp2]
+		self.listOfFaces = [FaceInfo(el[0][0:3],el[0][3:6],el[0][6:9],el[0][9],el[1]) for el in tmp2]
+
+	def constructListOfVertices(self):
+		self.listVertices = []
+
+		tmp = np.vstack([self.faces[:,i].reshape(-1,1) for i in range(3)])
+		listVerticesConnectedToAFace,reverseIndex = np.unique(tmp,return_inverse= True)
+		
+		for el in listVerticesConnectedToAFace:
+			self.listVertices.append(VerticeNode(el))
+
+		self.listVerticesConnectedToFace = itemgetter(*reverseIndex)(self.listVertices)
+
+	def lookForFaceInfoWithSameEdgeAndUpdateNormal(self,face,normalOriented):
+		# face, normalOriented = algoGlobalConstraint.getFaceOnOriginalHullOutwardlyOriented()
+		z = [[face[0],face[1]],[face[1],face[2]], [face[0],face[2]] ]
+		z = [[min(el1),max(el1)] for el1 in z]
+		faceAsEdgeIndex =set([ NSquareNMapping(el) for el in z])
+		for el in self.listOfFaces:
+			if set(el.edgeIndex.astype("int"))==faceAsEdgeIndex:
+				el.normal = normalOriented
+				return el
 
 class FaceAsNode(object):
 	"""docstring for Node"""
@@ -72,8 +118,18 @@ class FaceAsNode(object):
 		self.nbResEdgeMax = nbResEdgeMax
 		self.faces = dict.fromkeys(self.faceInfo.edgeIndex)
 		self.keys = set(self.faces.keys())
+		# self.outwardLink = 0
+		# self.inwardLink = 0
+		self.linked = False
+		self.buckets = []
 	def addFace(self,AFaceAsNode,edgeIndex):
-		self.faces[edgeIndex] = AFaceAsNode
+		# self.outwardLink+=1
+		face = self.faces[edgeIndex]
+		if (face is None):
+			self.faces[edgeIndex]= [AFaceAsNode]
+		else:
+			self.faces[edgeIndex].append(AFaceAsNode)
+		# self.faces[edgeIndex].inwardLink +=1
 		# AFaceAsNode.nbResEdgeMax-=1
 		# self.nbResEdgeMax -= 1
 
